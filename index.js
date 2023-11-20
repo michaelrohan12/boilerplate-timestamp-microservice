@@ -29,15 +29,27 @@ app.route("/api").get((req, res) => {
 });
 
 app.route("/api/:date").get((req, res) => {
-  const givenDate = req.params.date;
-  var dateObject = new Date(givenDate);
-  if (dateObject == "Invalid Date") {
-    dateObject = new Date(parseInt(givenDate));
-    if (dateObject === "Invalid Date") {
-      res.json({ error: "Invalid Date" });
+  const dateString = req.params.date;
+  const dateFormat = /^\d{4}-\d{2}-\d{2}$/;
+  const numPattern = /^\d+-\d+-\d+$/;
+  var dateObject = new Date(req.params.date);
+  if (dateFormat.test(dateString)) {
+    dateObject = new Date(dateString);
+  } else if (numPattern.test(dateString)) {
+    dateObject = new Date("Invalid Date");
+  } else {
+    var unixTimestamp = parseInt(dateString, 10);
+    if (!isNaN(unixTimestamp) && unixTimestamp > 10000) {
+      var unixDate = new Date(unixTimestamp * 1000);
+      if (!isNaN(unixDate.getTime())) {
+        dateObject = new Date(parseInt(dateString));
+      }
     }
   }
-  res.json({ unix: dateObject.getTime(), utc: dateObject.toUTCString() });
+
+  dateObject.toString() === "Invalid Date"
+    ? res.json({ error: dateObject.toString() })
+    : res.json({ unix: dateObject.getTime(), utc: dateObject.toUTCString() });
 });
 
 // listen for requests :)
